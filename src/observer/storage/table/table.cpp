@@ -12,8 +12,14 @@ See the Mulan PSL v2 for more details. */
 // Created by Meiyi & Wangyunlai on 2021/5/13.
 //
 
+#include <cerrno>
+#include <fcntl.h>
+#include <filesystem>
+#include <iostream>
 #include <limits.h>
 #include <string.h>
+#include <string>
+#include <unistd.h>
 
 #include "common/defs.h"
 #include "common/lang/string.h"
@@ -30,7 +36,6 @@ See the Mulan PSL v2 for more details. */
 #include "storage/record/record_manager.h"
 #include "storage/table/table.h"
 #include "storage/trx/trx.h"
-
 Table::~Table()
 {
   if (record_handler_ != nullptr) {
@@ -127,6 +132,46 @@ RC Table::create(Db *db, int32_t table_id, const char *path, const char *name, c
   return rc;
 }
 
+RC Table::drop(const char *dir)
+{
+  // NOTE:
+  // 数据页面
+  // 元数据页面
+  // 索引页面
+  RC rc = sync();
+  if (rc != RC::SUCCESS) {
+    return rc;
+  }
+  // 元数据
+  string path = table_meta_file(dir, name());
+  if (unlink(path.c_str()) != 0) {
+    LOG_ERROR("Fail to remove meta file=%s, errno=%d",path.c_str(),errno);
+    return RC::GENERIC_ERROR;
+  }
+  // 数据
+
+  string data_path = table_data_file(dir, name());
+  if (unlink(data_path.c_str()) != 0) {
+    LOG_ERROR("Fail to remove data file=%s, errno=%d",data_path.c_str(),errno);
+    return RC::GENERIC_ERROR;
+  }
+  // TODO:
+  // 删除text字段的文件
+
+  // 删除索引
+  const int n = table_meta_.index_num();
+  for (int i = 0; i < n; i++) {
+    ((BplusTreeIndex *)indexes_[i])->close();
+    auto  &meta       = indexes_[i]->index_meta();
+    string index_path = table_index_file(base_dir_.c_str(), name(), meta.name());
+    if (unlink(index_path.c_str()) != 0) {
+      LOG_ERROR("Fail to remove data file=%s, errno=%d",index_path.c_str(),errno);
+      return RC::GENERIC_ERROR;
+    }
+  }
+
+  return RC::SUCCESS;
+}
 RC Table::open(Db *db, const char *meta_file, const char *base_dir)
 {
   // 加载元数据文件

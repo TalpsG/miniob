@@ -298,6 +298,7 @@ drop_index_stmt:      /*drop index 语句的语法解析树*/
 create_table_stmt:    /*create table 语句的语法解析树*/
     CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE storage_format
     {
+    std::cout << "yacc_sql create table stmt\n";
       $$ = new ParsedSqlNode(SCF_CREATE_TABLE);
       CreateTableSqlNode &create_table = $$->create_table;
       create_table.relation_name = $3;

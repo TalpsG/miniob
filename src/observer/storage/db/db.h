@@ -21,6 +21,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/memory.h"
 #include "common/lang/span.h"
 #include "sql/parser/parse_defs.h"
+#include "storage/table/table.h"
 #include "storage/buffer/disk_buffer_pool.h"
 #include "storage/clog/disk_log_handler.h"
 #include "storage/buffer/double_write_buffer.h"
@@ -43,6 +44,7 @@ class TrxKit;
  */
 class Db
 {
+
 public:
   Db() = default;
   ~Db();
@@ -80,6 +82,25 @@ public:
 
   /// @brief 列出所有的表
   void all_tables(vector<string> &table_names) const;
+
+  /// NOTE:talps
+  /// @brief 删除表
+  RC drop_table(const char *name)
+  {
+    auto it = opened_tables_.find(name);
+    if (it == opened_tables_.end()) {
+      return RC::SCHEMA_TABLE_NOT_EXIST;
+    }
+    Table *table = it->second;
+    auto   rc    = table->drop(path_.c_str());
+    if (rc != RC::SUCCESS) {
+      return rc;
+    }
+    opened_tables_.erase(it);
+    delete table;
+
+    return RC::SUCCESS;
+  }
 
   /**
    * @brief 将所有内存中的数据，刷新到磁盘中。

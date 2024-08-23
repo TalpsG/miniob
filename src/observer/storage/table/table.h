@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/types.h"
 #include "common/lang/span.h"
 #include "common/lang/functional.h"
+#include <filesystem>
 
 struct RID;
 class Record;
@@ -53,6 +54,15 @@ public:
    */
   RC create(Db *db, int32_t table_id, const char *path, const char *name, const char *base_dir,
       span<const AttrInfoSqlNode> attributes, StorageFormat storage_format);
+  /**
+   * 创建一个表
+   * @param path 元数据保存的文件(完整路径)
+   * @param name 表名
+   * @param base_dir 表数据存放的路径
+   * @param attribute_count 字段个数
+   * @param attributes 字段
+   */
+  RC drop(const char *dir);
 
   /**
    * 打开一个表

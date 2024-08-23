@@ -1,0 +1,6 @@
+# 8.20
+读了从parse到executor的代码。
+table有meta_data和table_data两个文件
+
+droptable基本可以看作是createtable的逆操作，因此在db下编写droptable即可
+

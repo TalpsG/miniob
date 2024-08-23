@@ -23,6 +23,7 @@ class SqlResult;
  * @brief 与客户端进行通讯
  * @ingroup Communicator
  * @details 使用简单的文本通讯协议，每个消息使用'\0'结尾
+ * @ comunicator用来读取数据，初始化event
  */
 class PlainCommunicator : public Communicator
 {
